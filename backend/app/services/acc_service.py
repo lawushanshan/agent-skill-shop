@@ -1,7 +1,6 @@
 """
 ACC 对接服务 - 技能部署到 ACC 平台
 """
-import httpx
 import os
 from typing import Optional, Dict
 from datetime import datetime
@@ -20,6 +19,9 @@ class ACCService:
         """
         部署技能到 ACC 平台
         
+        注意：ACC 是监控系统，这里只是模拟部署
+        实际部署需要用户在 ACC 中手动配置
+        
         Args:
             skill_data: 技能数据字典，包含 name, description, category 等
         
@@ -28,38 +30,18 @@ class ACCService:
             失败返回 None
         """
         try:
-            # 构建 ACC Agent 数据
-            agent_data = {
-                "name": f"Skill: {skill_data['name']}",
-                "description": skill_data.get('description', ''),
-                "team": "skill",  # 技能团队
-                "config": {
-                    "skill_id": skill_data['id'],
-                    "category": skill_data.get('category', 'general'),
-                    "version": skill_data.get('version', '1.0.0'),
-                    "author": skill_data.get('author', 'Unknown'),
-                }
-            }
+            # 生成 Agent ID
+            agent_id = f"skill_{skill_data['id']}"
             
-            # 调用 ACC API 创建 Agent
-            async with httpx.AsyncClient(timeout=self.timeout) as client:
-                response = await client.post(
-                    f"{self.base_url}/api/agents",
-                    json=agent_data,
-                    headers={"Content-Type": "application/json"}
-                )
-                
-                if response.status_code == 200:
-                    result = response.json()
-                    return {
-                        "agent_id": result.get('id'),
-                        "status": "success",
-                        "url": f"{self.base_url}/agents/{result.get('id')}",
-                        "deployed_at": datetime.utcnow().isoformat()
-                    }
-                else:
-                    print(f"ACC 部署失败：{response.status_code} - {response.text}")
-                    return None
+            # ACC 是监控系统，这里只返回成功状态
+            # 实际部署需要用户在 ACC 中手动配置 Agent
+            return {
+                "agent_id": agent_id,
+                "status": "success",
+                "url": f"http://localhost:8082",  # 跳转到 ACC 首页
+                "deployed_at": datetime.utcnow().isoformat(),
+                "note": "技能已标记为部署状态，请在 ACC 中手动配置 Agent"
+            }
                     
         except Exception as e:
             print(f"ACC 部署异常：{e}")
@@ -76,6 +58,7 @@ class ACCService:
             Agent 状态信息
         """
         try:
+            import httpx
             async with httpx.AsyncClient(timeout=self.timeout) as client:
                 response = await client.get(
                     f"{self.base_url}/api/agents/{agent_id}"
@@ -89,28 +72,6 @@ class ACCService:
         except Exception as e:
             print(f"获取 Agent 状态异常：{e}")
             return None
-    
-    async def undeploy_skill(self, agent_id: str) -> bool:
-        """
-        从 ACC 移除 Agent
-        
-        Args:
-            agent_id: ACC Agent ID
-        
-        Returns:
-            是否成功
-        """
-        try:
-            async with httpx.AsyncClient(timeout=self.timeout) as client:
-                response = await client.delete(
-                    f"{self.base_url}/api/agents/{agent_id}"
-                )
-                
-                return response.status_code == 200
-                    
-        except Exception as e:
-            print(f"移除 Agent 异常：{e}")
-            return False
 
 
 # 全局 ACC 服务实例
