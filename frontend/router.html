@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Agent Skill Shop</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+    .router-container { height: 100vh; display: flex; align-items: center; justify-content: center; }
+  </style>
+</head>
+<body>
+  <div class="router-container">
+    <div style="text-align: center;">
+      <h1>🛒 Agent Skill Shop</h1>
+      <p style="margin: 20px 0; color: #666;">正在加载...</p>
+      <a href="index.html" style="color: #667eea;">如果未自动跳转，请点击这里</a>
+    </div>
+  </div>
+  <script>
+    // 简单的前端路由
+    const hash = window.location.hash;
+    if (!hash || hash === '#/' || hash === '#') {
+      window.location.href = 'index.html';
+    } else if (hash.startsWith('#/skill/')) {
+      window.location.href = 'skill-detail.html';
+    } else if (hash.includes('upload')) {
+      window.location.href = 'upload.html';
+    } else if (hash.includes('profile')) {
+      window.location.href = 'profile.html';
+    } else if (hash.includes('login')) {
+      window.location.href = 'index.html#/login';
+    } else if (hash.includes('register')) {
+      window.location.href = 'index.html#/register';
+    } else {
+      window.location.href = 'index.html';
+    }
+  </script>
+</body>
+</html>

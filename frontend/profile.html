@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>个人中心 - Agent Skill Shop</title>
+  <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+  <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+  <link rel="stylesheet" href="https://unpkg.com/ant-design-vue@4/dist/reset.css">
+  <script src="https://unpkg.com/ant-design-vue@4/dist/antd.min.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f5f5; }
+    .profile { max-width: 1200px; margin: 0 auto; padding: 24px; }
+    .profile-header { display: flex; align-items: center; gap: 24px; margin-bottom: 32px; padding: 32px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 16px; color: white; }
+    .profile-info h1 { font-size: 28px; margin-bottom: 8px; }
+    .profile-info p { opacity: 0.9; margin-bottom: 12px; }
+    .mb-24 { margin-bottom: 24px; }
+    .app-header { display: flex; align-items: center; justify-content: space-between; padding: 0 24px; height: 64px; background: white; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 24px; }
+    .logo { display: flex; align-items: center; gap: 12px; font-size: 20px; font-weight: 700; color: #667eea; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <header class="app-header">
+      <div class="logo" @click="$router.push('/')">
+        <span class="logo-icon">🛒</span>
+        <span class="logo-text">Agent Skill Shop</span>
+      </div>
+      <a-button @click="$router.push('/')">← 返回</a-button>
+    </header>
+
+    <div class="profile" v-if="user">
+      <div class="profile-header">
+        <a-avatar :size="80">
+          <template #icon>{{ user.username?.[0]?.toUpperCase() }}</template>
+        </a-avatar>
+        <div class="profile-info">
+          <h1>{{ user.username }}</h1>
+          <p>{{ user.email }}</p>
+          <a-tag v-if="user.is_developer" color="blue">开发者</a-tag>
+          <a-tag v-else color="green">用户</a-tag>
+        </div>
+      </div>
+
+      <a-row :gutter="24">
+        <a-col :span="12" v-if="user.is_developer">
+          <a-card title="我的技能" class="mb-24">
+            <template #extra>
+              <a @click="$router.push('/upload')">上传新技能</a>
+            </template>
+            
+            <a-empty v-if="mySkills.length === 0" description="暂无技能" />
+            
+            <a-list v-else :data-source="mySkills" split>
+              <template #renderItem="{ item }">
+                <a-list-item>
+                  <a-list-item-meta>
+                    <template #title>
+                      <a @click="goToSkill(item.id)">{{ item.name }}</a>
+                    </template>
+                    <template #description>
+                      <a-tag v-if="item.is_free" color="green">免费</a-tag>
+                      <a-tag v-else color="orange">¥{{ item.price }}</a-tag>
+                      <span>📥 {{ item.download_count }} 次下载</span>
+                    </template>
+                  </a-list-item-meta>
+                </a-list-item>
+              </template>
+            </a-list>
+          </a-card>
+        </a-col>
+
+        <a-col :span="12">
+          <a-card title="我的订单" class="mb-24">
+            <a-empty v-if="orders.length === 0" description="暂无订单" />
+            
+            <a-list v-else :data-source="orders" split>
+              <template #renderItem="{ item }">
+                <a-list-item>
+                  <a-list-item-meta>
+                    <template #title>
+                      {{ item.order_no }}
+                    </template>
+                    <template #description>
+                      <a-tag :color="getStatusColor(item.status)">{{ getStatusText(item.status) }}</a-tag>
+                      <span>¥{{ item.amount }}</span>
+                    </template>
+                  </a-list-item-meta>
+                </a-list-item>
+              </template>
+            </a-list>
+          </a-card>
+
+          <a-card title="账户信息">
+            <a-descriptions :column="1" size="small">
+              <a-descriptions-item label="用户 ID">{{ user.id }}</a-descriptions-item>
+              <a-descriptions-item label="注册时间">{{ user.created_at ? new Date(user.created_at).toLocaleDateString() : '-' }}</a-descriptions-item>
+              <a-descriptions-item label="角色">{{ user.role || '普通用户' }}</a-descriptions-item>
+            </a-descriptions>
+          </a-card>
+        </a-col>
+      </a-row>
+    </div>
+
+    <div v-else style="text-align: center; padding: 100px 0;">
+      <a-result status="401" title="请先登录" sub-title="登录后才能查看个人中心">
+        <template #extra>
+          <a-button type="primary" @click="$router.push('/login')">去登录</a-button>
+        </template>
+      </a-result>
+    </div>
+  </div>
+
+  <script>
+    const { createApp, ref, onMounted } = Vue;
+    const { message } = antd;
+
+    const api = axios.create({
+      baseURL: 'http://localhost:8001',
+      timeout: 10000
+    });
+
+    api.interceptors.request.use(config => {
+      const token = localStorage.getItem('token');
+      if (token) config.headers.Authorization = `Bearer ${token}`;
+      return config;
+    });
+
+    const app = createApp({
+      setup() {
+        const user = ref(null);
+        const mySkills = ref([]);
+        const orders = ref([]);
+
+        const getStatusColor = (status) => {
+          const colors = { pending: 'orange', paid: 'blue', completed: 'green', refunded: 'red' };
+          return colors[status] || 'default';
+        };
+
+        const getStatusText = (status) => {
+          const texts = { pending: '待支付', paid: '已支付', completed: '已完成', refunded: '已退款' };
+          return texts[status] || status;
+        };
+
+        const loadData = async () => {
+          const token = localStorage.getItem('token');
+          if (!token) {
+            user.value = null;
+            return;
+          }
+
+          try {
+            const userStr = localStorage.getItem('user');
+            if (userStr) {
+              user.value = JSON.parse(userStr);
+              
+              if (user.value.is_developer) {
+                const skillsRes = await api.get('/api/skills', { params: { limit: 100 } });
+                mySkills.value = (skillsRes.data.items || []).filter(s => s.developer_id === user.value.id);
+              }
+            }
+            
+            const ordersRes = await api.get('/api/orders');
+            orders.value = ordersRes.data.items || [];
+          } catch (e) {
+            console.error(e);
+            message.error('加载数据失败');
+          }
+        };
+
+        const goToSkill = (skillId) => {
+          window.location.hash = '/skill/' + skillId;
+        };
+
+        onMounted(loadData);
+
+        return { user, mySkills, orders, getStatusColor, getStatusText, goToSkill };
+      }
+    });
+
+    app.use(antd);
+    app.mount('#app');
+  </script>
+</body>
+</html>
