@@ -43,6 +43,12 @@ class Skill(Base):
     download_count = Column(Integer, default=0)
     rating = Column(Float, default=0.0)
     review_count = Column(Integer, default=0)
+    
+    # ACC 部署相关字段
+    acc_agent_id = Column(String(100), nullable=True)  # ACC Agent ID
+    acc_deployed = Column(Boolean, default=False)  # 是否已部署到 ACC
+    acc_deployed_at = Column(TIMESTAMP, nullable=True)  # ACC 部署时间
+    
     created_at = Column(TIMESTAMP, default=datetime.utcnow)
     updated_at = Column(TIMESTAMP, default=datetime.utcnow, onupdate=datetime.utcnow)
     

@@ -19,6 +19,7 @@ from app.schemas import (
     OrderCreate, OrderResponse, OrderList,
     ReviewCreate, ReviewResponse
 )
+from app.services.acc_service import acc_service
 
 # 创建数据库表
 models.Base.metadata.create_all(bind=engine)
@@ -327,6 +328,113 @@ async def create_review(
     db.refresh(db_review)
     return db_review
 
+# ============ ACC 对接 API ============
+
+@app.post("/api/skills/{skill_id}/deploy", response_model=dict)
+async def deploy_skill_to_acc(
+    skill_id: int,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user)
+):
+    """部署技能到 ACC 平台"""
+    # 获取技能
+    skill = db.query(models.Skill).filter(models.Skill.id == skill_id).first()
+    if not skill:
+        raise HTTPException(status_code=404, detail="Skill not found")
+    
+    # 检查是否已部署
+    if skill.acc_deployed:
+        return {
+            "status": "already_deployed",
+            "agent_id": skill.acc_agent_id,
+            "url": f"http://localhost:8082/agents/{skill.acc_agent_id}"
+        }
+    
+    # 部署到 ACC
+    skill_data = {
+        "id": skill.id,
+        "name": skill.name,
+        "description": skill.description,
+        "category": skill.category,
+        "version": skill.version,
+        "author": skill.author or current_user.get('username', 'Unknown')
+    }
+    
+    result = await acc_service.deploy_skill_to_acc(skill_data)
+    
+    if not result:
+        raise HTTPException(status_code=500, detail="Failed to deploy to ACC")
+    
+    # 更新技能记录
+    skill.acc_agent_id = result["agent_id"]
+    skill.acc_deployed = True
+    skill.acc_deployed_at = datetime.utcnow()
+    db.commit()
+    
+    return {
+        "status": "success",
+        "agent_id": result["agent_id"],
+        "url": result["url"],
+        "deployed_at": result["deployed_at"]
+    }
+
+
+@app.get("/api/skills/{skill_id}/acc-status")
+async def get_acc_deployment_status(
+    skill_id: int,
+    db: Session = Depends(get_db)
+):
+    """获取技能在 ACC 的部署状态"""
+    skill = db.query(models.Skill).filter(models.Skill.id == skill_id).first()
+    if not skill:
+        raise HTTPException(status_code=404, detail="Skill not found")
+    
+    if not skill.acc_deployed:
+        return {
+            "deployed": False,
+            "message": "Skill not deployed to ACC"
+        }
+    
+    # 从 ACC 获取最新状态
+    agent_status = await acc_service.get_agent_status(skill.acc_agent_id)
+    
+    return {
+        "deployed": True,
+        "agent_id": skill.acc_agent_id,
+        "acc_url": f"http://localhost:8082/agents/{skill.acc_agent_id}",
+        "deployed_at": skill.acc_deployed_at.isoformat() if skill.acc_deployed_at else None,
+        "agent_status": agent_status
+    }
+
+
+@app.delete("/api/skills/{skill_id}/deploy")
+async def undeploy_skill_from_acc(
+    skill_id: int,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user)
+):
+    """从 ACC 移除技能"""
+    skill = db.query(models.Skill).filter(models.Skill.id == skill_id).first()
+    if not skill:
+        raise HTTPException(status_code=404, detail="Skill not found")
+    
+    if not skill.acc_deployed:
+        return {"status": "not_deployed"}
+    
+    # 从 ACC 移除
+    success = await acc_service.undeploy_skill(skill.acc_agent_id)
+    
+    if success:
+        # 更新技能记录
+        skill.acc_deployed = False
+        skill.acc_agent_id = None
+        skill.acc_deployed_at = None
+        db.commit()
+        return {"status": "success", "message": "Removed from ACC"}
+    else:
+        raise HTTPException(status_code=500, detail="Failed to remove from ACC")
+
+
 # ============ 启动信息 ============
 
 @app.on_event("startup")
@@ -342,4 +450,4 @@ async def startup_event():
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8087)
+    uvicorn.run(app, host="0.0.0.0", port=8001)

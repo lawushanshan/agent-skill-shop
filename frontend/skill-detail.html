@@ -97,12 +97,21 @@
             <a-button
               size="large"
               block
+              type="primary"
               style="margin-top: 12px"
-              v-if="isLoggedIn"
+              v-if="isLoggedIn && !skill.acc_deployed"
               @click="handleDeploy"
             >
               🚀 部署到 ACC
             </a-button>
+
+            <a-alert
+              v-if="skill.acc_deployed"
+              message="✅ 已部署到 ACC"
+              description="该技能已部署到 ACC 平台，可以在 ACC 中管理"
+              type="success"
+              style="margin-top: 12px;"
+            />
 
             <div class="platform-fee" v-if="!skill.is_free">
               <p>💡 说明：</p>
@@ -180,8 +189,33 @@
           }
         };
 
-        const handleDeploy = () => {
-          message.info('ACC 对接功能开发中... 预计 06:00 完成');
+        const handleDeploy = async () => {
+          if (!isLoggedIn.value) {
+            message.warning('请先登录');
+            window.location.hash = '/login';
+            return;
+          }
+
+          const modal = antd.Modal.confirm({
+            title: '部署到 ACC 平台',
+            content: `确定要将技能"${skill.value.name}"部署到 ACC 平台吗？`,
+            okText: '确认部署',
+            cancelText: '取消',
+            onOk: async () => {
+              try {
+                const res = await api.post(`/api/skills/${skill.value.id}/deploy`);
+                if (res.data.status === 'already_deployed') {
+                  message.info('该技能已部署到 ACC');
+                } else {
+                  message.success('部署成功！');
+                  // 打开 ACC 管理页面
+                  window.open(res.data.url, '_blank');
+                }
+              } catch (e) {
+                message.error(e.response?.data?.detail || '部署失败');
+              }
+            }
+          });
         };
 
         onMounted(loadSkill);
