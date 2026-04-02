@@ -17,8 +17,8 @@
 ### 服务信息
 | 服务 | 端口 | 协议 |
 |------|------|------|
-| 后端 API | 8001 | HTTP |
-| 前端页面 | 80/443 | HTTP/HTTPS |
+| 后端 API | 8087 | HTTP |
+| 前端页面 | 8083 | HTTP/HTTPS |
 | 数据库 | 3306 | MySQL |
 
 ---
@@ -125,7 +125,7 @@ server {
 
     # 后端 API 代理
     location /api/ {
-        proxy_pass http://localhost:8001;
+        proxy_pass http://localhost:8087;
         proxy_set_header Host \$host;
         proxy_set_header X-Real-IP \$remote_addr;
         proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
@@ -134,12 +134,12 @@ server {
 
     # 健康检查
     location /health {
-        proxy_pass http://localhost:8001;
+        proxy_pass http://localhost:8087;
     }
 
     # API 文档
     location /docs {
-        proxy_pass http://localhost:8001;
+        proxy_pass http://localhost:8087;
     }
 }
 EOF
@@ -189,7 +189,7 @@ EOF
 ### 1. 健康检查
 
 ```bash
-curl http://localhost:8001/health
+curl http://localhost:8087/health
 # 预期输出：{"status":"ok","version":"1.0.0"}
 ```
 

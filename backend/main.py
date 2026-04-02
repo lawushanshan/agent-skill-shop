@@ -460,11 +460,11 @@ async def startup_event():
     print("=" * 60)
     print("🚀 Agent Skill Shop 启动成功！")
     print("=" * 60)
-    print(f"📡 API 文档：http://localhost:8001/docs")
-    print(f"🔍 Redoc: http://localhost:8001/redoc")
-    print(f"❤️  健康检查：http://localhost:8001/health")
+    print(f"📡 API 文档：http://localhost:8087/docs")
+    print(f"🔍 Redoc: http://localhost:8087/redoc")
+    print(f"❤️  健康检查：http://localhost:8087/health")
     print("=" * 60)
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8001)
+    uvicorn.run(app, host="0.0.0.0", port=8087)
