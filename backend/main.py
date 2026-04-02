@@ -4,12 +4,16 @@ AI 智能体技能商店平台
 """
 from fastapi import FastAPI, Depends, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
 from typing import List, Optional
 import os
 import jwt
 import hashlib
 from datetime import datetime, timedelta
+
+# JWT Token 认证
+security = HTTPBearer()
 
 from app.database import get_db, engine, Base
 from app import models
@@ -51,7 +55,10 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
 
-async def get_current_user(token: str, db: Session = Depends(get_db)):
+async def get_current_user(
+    credentials: HTTPAuthorizationCredentials = Depends(security),
+    db: Session = Depends(get_db)
+):
     """获取当前用户"""
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
@@ -59,11 +66,21 @@ async def get_current_user(token: str, db: Session = Depends(get_db)):
         headers={"WWW-Authenticate": "Bearer"},
     )
     try:
+        token = credentials.credentials
+        print(f"Token: {token[:50]}...")
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        print(f"Payload: {payload}")
         user_id: int = payload.get("sub")
         if user_id is None:
             raise credentials_exception
-    except jwt.PyJWTError:
+    except jwt.ExpiredSignatureError:
+        print("Token 已过期")
+        raise credentials_exception
+    except jwt.InvalidTokenError as e:
+        print(f"Token 无效：{e}")
+        raise credentials_exception
+    except Exception as e:
+        print(f"认证异常：{e}")
         raise credentials_exception
     
     user = db.query(models.User).filter(models.User.id == user_id).first()
