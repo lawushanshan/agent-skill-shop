@@ -41,3 +41,11 @@ logs/
 .pytest_cache/
 .coverage
 htmlcov/
+-e .backend.pid
+.frontend.pid
+**/__pycache__/
+*.pyc
+backend/check_*.py
+backend/create_admin.py
+backend/fix_admin.py
+test_create_skill.py

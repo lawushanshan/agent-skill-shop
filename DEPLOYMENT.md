@@ -1,8 +1,8 @@
 # Agent Skill Shop - 部署文档
 
-**版本**: 1.0.0  
-**更新时间**: 2026-04-01 20:35  
-**负责人**: 运维团队
+**版本**: 1.1.0  
+**更新时间**: 2026-04-10 08:45  
+**负责人**: 运维团队 (titan / msK2iF)
 
 ---
 
@@ -15,15 +15,55 @@
 - [x] SSL 证书 (可选)
 
 ### 服务信息
-| 服务 | 端口 | 协议 |
-|------|------|------|
-| 后端 API | 8087 | HTTP |
-| 前端页面 | 8083 | HTTP/HTTPS |
-| 数据库 | 3306 | MySQL |
+| 服务 | 端口 | 协议 | 状态 |
+|------|------|------|------|
+| 后端 API | 8087 | HTTP | ✅ 运行中 |
+| 前端页面 | 8083 | HTTP/HTTPS | ✅ 运行中 |
+| 数据库 | 3306 | MySQL | ✅ 1Panel MySQL |
+
+### 数据库配置
+```
+DB_HOST=1Panel-mysql-wTIi
+DB_PORT=3306
+DB_USER=titan
+DB_PASSWORD=Qh3yXmREsKNCne5D
+DB_NAME=titan
+```
 
 ---
 
-## 🚀 部署步骤
+## 🚀 快速部署 (生产环境)
+
+### 方式一：使用启动脚本 (推荐)
+
+```bash
+# 进入项目目录
+cd /app/working/projects/titanlab/agent-skill-shop
+
+# 启动后端服务
+cd backend
+nohup python3 -m uvicorn main:app --host 0.0.0.0 --port 8087 > /tmp/agent_skill_shop.log 2>&1 &
+
+# 启动前端服务
+cd ../frontend
+nohup python3 -m http.server 8083 > /tmp/frontend_8083.log 2>&1 &
+
+# 检查服务状态
+lsof -i :8087  # 后端
+lsof -i :8083  # 前端
+```
+
+### 方式二：使用 start.sh 脚本
+
+```bash
+cd /app/working/projects/titanlab/agent-skill-shop
+chmod +x start.sh
+./start.sh
+```
+
+---
+
+## 📋 完整部署步骤 (新服务器)
 
 ### 1. 准备环境
 
@@ -277,17 +317,74 @@ pip install prometheus-client
 
 ## 📞 联系方式
 
-- **项目负责人**: ADMIN
-- **技术支持**: CTO / 后端工程师
-- **紧急联系**: 运维团队
+- **项目负责人**: ADMIN (用户小胖)
+- **技术支持**: CTO Tom (default)
+- **运维团队**: titan (msK2iF)
+
+---
+
+##  测试账号
+
+| 角色 | 邮箱 | 密码 | 功能 |
+|------|------|------|------|
+| 开发者 | testdev1@titanlab.com | test123456 | 上传/管理技能 |
+| 管理员 | admin@titanlab.com | admin123456 | 审核/管理所有技能 |
+
+---
+
+## 🔌 API 端点列表
+
+### 用户认证
+| 方法 | 端点 | 说明 |
+|------|------|------|
+| POST | /api/auth/register | 用户注册 |
+| POST | /api/auth/login | 用户登录 |
+| GET | /api/auth/me | 获取当前用户 |
+
+### 技能管理
+| 方法 | 端点 | 说明 |
+|------|------|------|
+| GET | /api/skills | 获取技能列表 |
+| GET | /api/skills/{id} | 获取技能详情 |
+| POST | /api/skills | 创建技能 (开发者) |
+| PUT | /api/skills/{id} | 更新技能 |
+| DELETE | /api/skills/{id} | 删除技能 (管理员) |
+| GET | /api/skills-all | 获取所有技能 (管理员) |
+| PUT | /api/skills/{id}/status | 更新技能状态 (管理员) |
+
+### 订单系统
+| 方法 | 端点 | 说明 |
+|------|------|------|
+| GET | /api/orders | 获取订单列表 |
+| POST | /api/orders | 创建订单 |
+
+### 评价系统
+| 方法 | 端点 | 说明 |
+|------|------|------|
+| POST | /api/skills/{id}/reviews | 创建评价 |
+| GET | /api/skills/{id}/reviews | 获取技能评价 |
+
+### ACC 对接
+| 方法 | 端点 | 说明 |
+|------|------|------|
+| POST | /api/skills/{id}/deploy | 部署到 ACC |
+| DELETE | /api/skills/{id}/deploy | 从 ACC 移除 |
+
+### 其他
+| 方法 | 端点 | 说明 |
+|------|------|------|
+| GET | /health | 健康检查 |
+| GET | /docs | Swagger API 文档 |
+| GET | /redoc | Redoc API 文档 |
 
 ---
 
 ## 📝 更新日志
 
-| 日期 | 版本 | 更新内容 |
-|------|------|---------|
-| 2026-04-01 | 1.0.0 | 初始版本 |
+| 日期 | 版本 | 更新内容 | 负责人 |
+|------|------|---------|--------|
+| 2026-04-10 | 1.1.0 | 添加快速部署、API 端点列表、测试账号 | CTO Tom |
+| 2026-04-01 | 1.0.0 | 初始版本 | CTO Tom |
 
 ---
 

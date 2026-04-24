@@ -53,6 +53,7 @@ class SkillResponse(BaseModel):
     rating: float
     review_count: int
     developer_id: int
+    developer_name: Optional[str] = None  # 开发者名称
     created_at: datetime
     updated_at: datetime
     
@@ -81,6 +82,7 @@ class UserResponse(BaseModel):
     username: str
     email: str
     avatar_url: Optional[str] = None
+    role: Optional[str] = "user"
     is_developer: bool = False
     
     class Config:

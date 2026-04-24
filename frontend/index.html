@@ -4,43 +4,322 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Agent Skill Shop - AI 智能体技能商店</title>
-  <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
-  <script src="https://unpkg.com/vue-router@4/dist/vue-router.global.js"></script>
-  <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
-  <link rel="stylesheet" href="https://unpkg.com/ant-design-vue@4/dist/reset.css">
-  <script src="https://unpkg.com/ant-design-vue@4/dist/antd.min.js"></script>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f5f5; }
     .app-container { min-height: 100vh; display: flex; flex-direction: column; }
-    .app-header { display: flex; align-items: center; justify-content: space-between; padding: 0 24px; height: 64px; background: white; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+    .app-header { display: flex; align-items: center; justify-content: space-between; padding: 0 24px; height: 64px; background: white; box-shadow: 0 2px 8px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 100; }
     .logo { display: flex; align-items: center; gap: 12px; font-size: 20px; font-weight: 700; color: #667eea; cursor: pointer; }
     .logo-icon { font-size: 28px; }
     .hero-section { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 80px 24px; text-align: center; color: white; }
     .hero-section h1 { font-size: 48px; margin-bottom: 16px; }
     .hero-section p { font-size: 18px; margin-bottom: 32px; opacity: 0.9; }
     .search-box { max-width: 600px; margin: 0 auto 24px; }
-    .filter-tags { display: flex; justify-content: center; gap: 12px; }
-    .skills-list { max-width: 1400px; margin: 0 auto; padding: 48px 24px; }
-    .skills-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px; }
+    .filter-tags { display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; }
+    .skills-list { max-width: 1400px; margin: 0 auto; padding: 48px 24px; flex: 1; }
+    .skills-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px; flex-wrap: wrap; gap: 16px; }
     .skills-header h2 { font-size: 28px; color: #333; }
     .skill-card { cursor: pointer; transition: transform 0.3s; height: 100%; }
     .skill-card:hover { transform: translateY(-8px); }
     .skill-cover { height: 200px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center; position: relative; }
     .skill-icon { font-size: 80px; }
-    .free-tag, .price-tag { position: absolute; top: 16px; right: 16px; font-weight: 600; }
-    .skill-title { font-size: 16px; font-weight: 600; color: #333; }
-    .skill-desc { color: #666; font-size: 14px; line-height: 1.6; }
-    .skill-meta { display: flex; justify-content: space-between; margin-top: 12px; color: #999; font-size: 13px; }
+    .free-tag, .price-tag { position: absolute; top: 16px; right: 16px; font-weight: 600; padding: 4px 12px; border-radius: 4px; color: white; }
+    .skill-title { font-size: 16px; font-weight: 600; color: #333; padding: 16px 16px 8px; }
+    .skill-desc { color: #666; font-size: 14px; line-height: 1.6; padding: 0 16px; }
+    .skill-meta { display: flex; justify-content: space-between; margin-top: 12px; color: #999; font-size: 13px; padding: 0 16px 16px; }
     .login-container { min-height: 100vh; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; }
     .login-box { background: white; border-radius: 16px; padding: 48px; width: 100%; max-width: 420px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
     .login-header { text-align: center; margin-bottom: 32px; }
     .login-header h1 { font-size: 28px; color: #333; margin-bottom: 8px; }
     .login-header p { color: #666; font-size: 14px; }
-    .login-footer { text-align: center; color: #666; font-size: 14px; margin-top: 16px; }
+    .form-group { margin-bottom: 20px; }
+    .form-group label { display: block; margin-bottom: 8px; color: #333; font-weight: 500; }
+    .form-input { width: 100%; padding: 12px 16px; border: 1px solid #d9d9d9; border-radius: 8px; font-size: 14px; transition: all 0.3s; }
+    .form-input:focus { outline: none; border-color: #667eea; box-shadow: 0 0 0 2px rgba(102,126,234,0.2); }
+    .form-input::placeholder { color: #999; }
+    .btn { padding: 12px 24px; border: none; border-radius: 8px; font-size: 16px; cursor: pointer; transition: all 0.3s; }
+    .btn-primary { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
+    .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
+    .btn:disabled { opacity: 0.6; cursor: not-allowed; }
+    .btn-success { background: #52c41a; color: white; }
+    .btn-warning { background: #faad14; color: white; }
+    .btn-danger { background: #ff4d4f; color: white; }
+    .login-footer { text-align: center; color: #666; font-size: 14px; margin-top: 24px; }
     .login-footer a { color: #667eea; text-decoration: none; margin-left: 8px; font-weight: 500; }
-    .app-footer { background: #1a1a2e; color: white; padding: 48px 24px; text-align: center; }
+    .app-footer { background: #1a1a2e; color: white; padding: 24px; text-align: center; }
     .app-footer p { margin: 8px 0; opacity: 0.8; }
+    .tag { display: inline-block; padding: 4px 12px; border-radius: 4px; font-size: 12px; }
+    .tag-green { background: #52c41a; color: white; }
+    .tag-blue { background: #1890ff; color: white; }
+    .tag-orange { background: #fa8c16; color: white; }
+    .tag-gray { background: #d9d9d9; color: #666; }
+    .card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 24px; }
+    .card { background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+    .card:hover { transform: translateY(-8px); box-shadow: 0 8px 24px rgba(0,0,0,0.15); }
+    .empty-state { text-align: center; padding: 60px 20px; color: #999; }
+    .upload-container { max-width: 800px; margin: 48px auto; padding: 24px; }
+    .upload-box { background: white; border-radius: 16px; padding: 48px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+    .upload-header { text-align: center; margin-bottom: 32px; }
+    .upload-header h1 { font-size: 28px; color: #333; margin-bottom: 8px; }
+    .upload-header p { color: #666; font-size: 14px; }
+    .admin-panel { max-width: 1200px; margin: 48px auto; padding: 24px; }
+    .admin-box { background: white; border-radius: 16px; padding: 32px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+    .admin-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px; }
+    .admin-header h1 { font-size: 24px; color: #333; }
+    .status-badge { padding: 4px 12px; border-radius: 12px; font-size: 12px; font-weight: 500; }
+    .status-draft { background: #d9d9d9; color: #666; }
+    .status-pending { background: #faad14; color: white; }
+    .status-published { background: #52c41a; color: white; }
+    .status-rejected { background: #ff4d4f; color: white; }
+    .table { width: 100%; border-collapse: collapse; }
+    .table th, .table td { padding: 12px 16px; text-align: left; border-bottom: 1px solid #f0f0f0; }
+    .table th { background: #fafafa; font-weight: 600; color: #333; }
+    .table tr:hover { background: #fafafa; }
+    .action-btns { display: flex; gap: 8px; }
+    .action-btn { padding: 4px 12px; border: none; border-radius: 4px; font-size: 12px; cursor: pointer; }
+    .user-menu { position: relative; }
+    .user-dropdown { 
+      position: absolute; 
+      top: 100%; 
+      right: 0; 
+      background: white; 
+      border-radius: 8px; 
+      box-shadow: 0 4px 16px rgba(0,0,0,0.15); 
+      padding: 8px 0; 
+      min-width: 180px; 
+      z-index: 10000;
+      margin-top: 8px;
+    }
+    .user-dropdown-item { 
+      padding: 10px 16px; 
+      cursor: pointer; 
+      color: #333;
+      user-select: none;
+    }
+    .user-dropdown-item:hover { 
+      background: #f5f5f5; 
+    }
+    .user-dropdown-divider { 
+      height: 1px; 
+      background: #f0f0f0; 
+      margin: 8px 0; 
+    }
+    .checkbox-label { display: flex; align-items: center; gap: 8px; cursor: pointer; }
+    .checkbox-label input { width: 16px; height: 16px; }
+    @media (max-width: 768px) {
+      .card-grid { grid-template-columns: 1fr; }
+      .skills-header { flex-direction: column; align-items: flex-start; }
+    }
+    
+    /* 上传技能页面样式 */
+    .upload-container {
+      min-height: calc(100vh - 200px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 48px 24px;
+      background: #f5f5f5;
+    }
+    .upload-box {
+      background: white;
+      border-radius: 16px;
+      padding: 48px;
+      width: 100%;
+      max-width: 600px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    }
+    .upload-header {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+    .upload-header h1 {
+      font-size: 28px;
+      color: #333;
+      margin-bottom: 8px;
+    }
+    .upload-header p {
+      color: #666;
+      font-size: 14px;
+    }
+    
+    /* 个人中心页面样式 */
+    .profile-container {
+      min-height: calc(100vh - 200px);
+      padding: 48px 24px;
+      background: #f5f5f5;
+    }
+    .profile-card {
+      background: white;
+      border-radius: 16px;
+      overflow: hidden;
+      max-width: 600px;
+      margin: 0 auto;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    }
+    .profile-header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      padding: 32px;
+      text-align: center;
+      color: white;
+    }
+    .profile-avatar {
+      width: 80px;
+      height: 80px;
+      background: rgba(255,255,255,0.3);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 32px;
+      margin: 0 auto 16px;
+    }
+    .profile-body {
+      padding: 32px;
+    }
+    .profile-info-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 16px 0;
+      border-bottom: 1px solid #f0f0f0;
+    }
+    .profile-info-item:last-child {
+      border-bottom: none;
+    }
+    .profile-info-label {
+      color: #666;
+      font-weight: 500;
+    }
+    .profile-info-value {
+      color: #333;
+    }
+    .status-badge {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+    .status-badge.success {
+      background: #e6f4ea;
+      color: #34a853;
+    }
+    .status-badge.default {
+      background: #f5f5f5;
+      color: #666;
+    }
+    .status-badge.primary {
+      background: #e6f7ff;
+      color: #1890ff;
+    }
+    .profile-actions {
+      display: flex;
+      gap: 16px;
+      margin-top: 24px;
+    }
+    
+    /* 我的技能页面样式 */
+    .my-skills-container {
+      min-height: calc(100vh - 200px);
+      padding: 48px 24px;
+      background: #f5f5f5;
+    }
+    .my-skills-box {
+      background: white;
+      border-radius: 16px;
+      padding: 32px;
+      max-width: 1200px;
+      margin: 0 auto;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    }
+    .my-skills-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+    .my-skills-header h1 {
+      font-size: 24px;
+      color: #333;
+    }
+    .filter-buttons {
+      display: flex;
+      gap: 8px;
+    }
+    .skills-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    .skills-table th,
+    .skills-table td {
+      padding: 12px 16px;
+      text-align: left;
+      border-bottom: 1px solid #f0f0f0;
+    }
+    .skills-table th {
+      background: #fafafa;
+      font-weight: 600;
+      color: #333;
+    }
+    .skills-table tr:hover {
+      background: #fafafa;
+    }
+    .action-buttons {
+      display: flex;
+      gap: 8px;
+    }
+    .empty-state {
+      text-align: center;
+      padding: 64px 24px;
+      color: #999;
+    }
+    .empty-state p {
+      margin-bottom: 24px;
+      font-size: 16px;
+    }
+    
+    /* 技能详情页面样式 */
+    .detail-container {
+      min-height: calc(100vh - 200px);
+      padding: 48px 24px;
+      background: #f5f5f5;
+    }
+    .detail-card {
+      background: white;
+      border-radius: 16px;
+      padding: 40px;
+      max-width: 900px;
+      margin: 0 auto;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    }
+    
+    /* 管理后台页面样式 */
+    .admin-panel {
+      min-height: calc(100vh - 200px);
+      padding: 48px 24px;
+      background: #f5f5f5;
+    }
+    .admin-box {
+      background: white;
+      border-radius: 16px;
+      padding: 32px;
+      max-width: 1400px;
+      margin: 0 auto;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    }
+    .admin-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+    .admin-header h1 {
+      font-size: 24px;
+      color: #333;
+    }
   </style>
 </head>
 <body>
@@ -50,283 +329,970 @@
         <span class="logo-icon">🛒</span>
         <span class="logo-text">Agent Skill Shop</span>
       </div>
-      <div>
-        <a-button v-if="isLoggedIn && isDeveloper" @click="$router.push('/upload')" style="margin-right: 8px">➕ 上传技能</a-button>
-        <a-button type="primary" v-if="!isLoggedIn" @click="$router.push('/login')">登录</a-button>
-        <a-button v-if="!isLoggedIn" style="margin-left: 8px" @click="$router.push('/register')">注册</a-button>
-        <a-dropdown v-else>
-          <a class="ant-dropdown-link" @click.prevent>
-            <a-avatar :size="32">{{ user?.username?.[0]?.toUpperCase() }}</a-avatar>
-            <span style="margin-left: 8px">{{ user?.username }}</span>
-          </a>
-          <template #overlay>
-            <a-menu>
-              <a-menu-item @click="handleLogout">🚪 退出登录</a-menu-item>
-            </a-menu>
-          </template>
-        </a-dropdown>
+      <div style="display: flex; align-items: center; gap: 16px;">
+        <button v-if="isLoggedIn && isDeveloper" @click="$router.push('/upload')" class="btn btn-primary" style="font-size: 14px; padding: 8px 16px;">➕ 上传技能</button>
+        <button v-if="isLoggedIn && isAdmin" @click="$router.push('/admin')" class="btn btn-warning" style="font-size: 14px; padding: 8px 16px;">🔧 管理后台</button>
+        <div class="user-menu" v-if="isLoggedIn" @click="showMenu = !showMenu" style="cursor: pointer; display: flex; align-items: center; gap: 8px;">
+          <span style="display: inline-block; width: 32px; height: 32px; background: #667eea; color: white; border-radius: 50%; text-align: center; line-height: 32px;">{{ user?.username?.[0]?.toUpperCase() }}</span>
+          <span>{{ user?.username }}</span>
+          <div v-if="showMenu" class="user-dropdown" @click.stop>
+            <div class="user-dropdown-item" @click.stop="$router.push('/profile'); showMenu=false">👤 个人中心</div>
+            <div class="user-dropdown-item" v-if="isDeveloper" @click.stop="$router.push('/my-skills'); showMenu=false">📦 我的技能</div>
+            <div class="user-dropdown-item" v-if="isAdmin" @click.stop="$router.push('/admin'); showMenu=false">🔧 管理后台</div>
+            <div class="user-dropdown-divider"></div>
+            <div class="user-dropdown-item" @click.stop="doLogout">🚪 退出登录</div>
+          </div>
+        </div>
+        <template v-else>
+          <button @click="$router.push('/login')" class="btn btn-primary" style="font-size: 14px; padding: 8px 16px;">登录</button>
+          <button @click="$router.push('/register')" class="btn" style="font-size: 14px; padding: 8px 16px; border: 1px solid #667eea; color: #667eea;">注册</button>
+        </template>
       </div>
     </header>
-
-    <router-view />
-
+    <router-view></router-view>
     <footer class="app-footer" v-if="showHeader">
-      <p>© 2026 Titan Lab. All rights reserved.</p>
-      <p>用 AI 解锁人类潜能的边界</p>
+      <p>© 2026 Agent Skill Shop - Titan Lab</p>
+      <p>让 AI 技能触手可及</p>
     </footer>
   </div>
 
+  <!-- 登录页面模板 -->
+  <template id="login-template">
+    <div class="login-container">
+      <div class="login-box">
+        <div class="login-header">
+          <h1>🛒 Agent Skill Shop</h1>
+          <p>欢迎回来</p>
+        </div>
+        <form @submit.prevent="handleLogin">
+          <div class="form-group">
+            <label>邮箱</label>
+            <input type="email" v-model="form.email" class="form-input" placeholder="your@email.com" required>
+          </div>
+          <div class="form-group">
+            <label>密码</label>
+            <input type="password" v-model="form.password" class="form-input" placeholder="请输入密码" required>
+          </div>
+          <button type="submit" class="btn btn-primary" :disabled="loading" style="width: 100%;">
+            {{ loading ? '登录中...' : '登录' }}
+          </button>
+        </form>
+        <div class="login-footer">
+          <span>还没有账号？</span>
+          <a href="#/register">立即注册</a>
+        </div>
+      </div>
+    </div>
+  </template>
+
+  <!-- 注册页面模板 -->
+  <template id="register-template">
+    <div class="login-container">
+      <div class="login-box">
+        <div class="login-header">
+          <h1>🛒 Agent Skill Shop</h1>
+          <p>创建新账号</p>
+        </div>
+        <form @submit.prevent="handleRegister">
+          <div class="form-group">
+            <label>用户名</label>
+            <input type="text" v-model="form.username" class="form-input" placeholder="请输入用户名" required>
+          </div>
+          <div class="form-group">
+            <label>邮箱</label>
+            <input type="email" v-model="form.email" class="form-input" placeholder="your@email.com" required>
+          </div>
+          <div class="form-group">
+            <label>密码</label>
+            <input type="password" v-model="form.password" class="form-input" placeholder="请输入密码 (至少 6 位)" minlength="6" required>
+          </div>
+          <div class="form-group">
+            <label class="checkbox-label">
+              <input type="checkbox" v-model="form.is_developer">
+              <span>申请成为开发者</span>
+            </label>
+          </div>
+          <button type="submit" class="btn btn-primary" :disabled="loading" style="width: 100%;">
+            {{ loading ? '注册中...' : '注册' }}
+          </button>
+        </form>
+        <div class="login-footer">
+          <span>已有账号？</span>
+          <a href="#/login">立即登录</a>
+        </div>
+      </div>
+    </div>
+  </template>
+
+  <!-- 首页模板 -->
+  <template id="home-template">
+    <div class="app-container">
+      <div class="hero-section">
+        <h1>🛒 Agent Skill Shop</h1>
+        <p>发现、购买和部署 AI 智能体技能</p>
+        <div class="search-box">
+          <input type="text" v-model="search" class="form-input" placeholder="搜索技能..." @keyup.enter="loadSkills" style="border-radius: 24px;">
+        </div>
+        <div class="filter-tags">
+          <button @click="filter='all';loadSkills()" :style="filter==='all' ? {background:'#667eea',color:'white'} : {background:'white',color:'#667eea'}" style="padding: 8px 20px; border: 1px solid #667eea; border-radius: 20px; cursor: pointer; margin: 4px;">全部</button>
+          <button @click="filter='free';loadSkills()" :style="filter==='free' ? {background:'#667eea',color:'white'} : {background:'white',color:'#667eea'}" style="padding: 8px 20px; border: 1px solid #667eea; border-radius: 20px; cursor: pointer; margin: 4px;">免费</button>
+          <button @click="filter='paid';loadSkills()" :style="filter==='paid' ? {background:'#667eea',color:'white'} : {background:'white',color:'#667eea'}" style="padding: 8px 20px; border: 1px solid #667eea; border-radius: 20px; cursor: pointer; margin: 4px;">付费</button>
+        </div>
+      </div>
+      <div class="skills-list">
+        <div class="skills-header">
+          <h2>🔥 热门技能</h2>
+        </div>
+        <div v-if="loading" class="card-grid">
+          <div class="card" v-for="i in 6" :key="i" style="height: 320px; background: #f0f0f0;"></div>
+        </div>
+        <div v-else-if="skills.length === 0" class="empty-state">
+          <p style="font-size: 16px;">暂无技能</p>
+        </div>
+        <div v-else class="card-grid">
+          <div class="card" v-for="skill in skills" :key="skill.id" @click="goToDetail(skill.id)" style="cursor: pointer;">
+            <div class="skill-cover">
+              <span class="skill-icon">{{ skill.icon || '🚀' }}</span>
+              <span :class="skill.is_free ? 'tag tag-green' : 'tag tag-blue'" class="price-tag">
+                {{ skill.is_free ? '免费' : '¥' + skill.price }}
+              </span>
+            </div>
+            <div class="skill-title">{{ skill.name }}</div>
+            <div class="skill-desc">{{ skill.description }}</div>
+            <div class="skill-meta">
+              <span>👤 {{ skill.developer_name || skill.author || '未知' }}</span>
+              <span>⭐ {{ skill.rating || 0 }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </template>
+
+  <!-- 上传技能页面模板 -->
+  <template id="upload-template">
+    <div class="upload-container">
+      <div class="upload-box">
+        <div class="upload-header">
+          <h1>➕ 上传技能</h1>
+          <p>分享你的 AI 智能体技能，获得收益</p>
+        </div>
+        <form @submit.prevent="handleSubmit">
+          <div class="form-group">
+            <label>技能名称 *</label>
+            <input type="text" v-model="form.name" class="form-input" placeholder="例如：智能客服助手" required>
+          </div>
+          <div class="form-group">
+            <label>技能描述 *</label>
+            <textarea v-model="form.description" class="form-input" rows="4" placeholder="描述技能的功能和特点" required></textarea>
+          </div>
+          <div class="form-group">
+            <label>分类 *</label>
+            <select v-model="form.category" class="form-input" required>
+              <option value="">请选择分类</option>
+              <option value="productivity">生产力</option>
+              <option value="analysis">数据分析</option>
+              <option value="creative">创意创作</option>
+              <option value="customer-service">客户服务</option>
+              <option value="education">教育培训</option>
+              <option value="other">其他</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>作者</label>
+            <input type="text" v-model="form.author" class="form-input" placeholder="作者名称">
+          </div>
+          <div class="form-group">
+            <label>价格 (¥) *</label>
+            <input type="number" v-model.number="form.price" class="form-input" placeholder="0 表示免费" min="0" step="0.01" required>
+          </div>
+          <div class="form-group">
+            <label class="checkbox-label">
+              <input type="checkbox" v-model="form.is_free" @change="handleFreeChange">
+              <span>设为免费技能</span>
+            </label>
+          </div>
+          <div class="form-group">
+            <label>GitHub 仓库</label>
+            <input type="url" v-model="form.repository" class="form-input" placeholder="https://github.com/...">
+          </div>
+          <div class="form-group">
+            <label>文档链接</label>
+            <input type="url" v-model="form.documentation" class="form-input" placeholder="https://...">
+          </div>
+          <div class="form-group">
+            <label>标签 (用逗号分隔)</label>
+            <input type="text" v-model="form.tagsStr" class="form-input" placeholder="AI, 自动化，助手">
+          </div>
+          <div style="display: flex; gap: 16px; margin-top: 32px;">
+            <button type="submit" class="btn btn-primary" :disabled="loading" style="flex: 1;">
+              {{ loading ? '提交中...' : '提交审核' }}
+            </button>
+            <button type="button" @click="$router.push('/')" class="btn" style="flex: 1; border: 1px solid #d9d9d9;">取消</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </template>
+
+  <!-- 管理后台模板 -->
+  <template id="admin-template">
+    <div class="admin-panel">
+      <div class="admin-box">
+        <div class="admin-header">
+          <h1>🔧 管理后台</h1>
+          <div style="display: flex; gap: 12px;">
+            <button @click="loadSkills('pending')" :class="currentFilter==='pending' ? 'btn btn-warning' : 'btn'" style="border: 1px solid #faad14; color: #faad14;">待审核</button>
+            <button @click="loadSkills('published')" :class="currentFilter==='published' ? 'btn btn-success' : 'btn'" style="border: 1px solid #52c41a; color: #52c41a;">已发布</button>
+            <button @click="loadSkills('all')" :class="currentFilter==='all' ? 'btn btn-primary' : 'btn'" style="border: 1px solid #667eea; color: #667eea;">全部</button>
+          </div>
+        </div>
+        <div v-if="loading" style="text-align: center; padding: 40px;">加载中...</div>
+        <div v-else-if="skills.length === 0" class="empty-state">暂无数据</div>
+        <table v-else class="table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>技能名称</th>
+              <th>开发者</th>
+              <th>价格</th>
+              <th>状态</th>
+              <th>创建时间</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="skill in skills" :key="skill.id">
+              <td>{{ skill.id }}</td>
+              <td>
+                <div style="font-weight: 500;">{{ skill.name }}</div>
+                <div style="font-size: 12px; color: #999;">{{ skill.category }}</div>
+              </td>
+              <td>{{ skill.author || '未知' }}</td>
+              <td>{{ skill.is_free ? '免费' : '¥' + skill.price }}</td>
+              <td><span :class="'status-badge status-' + skill.status">{{ statusText(skill.status) }}</span></td>
+              <td>{{ formatDate(skill.created_at) }}</td>
+              <td>
+                <div class="action-btns">
+                  <button v-if="skill.status === 'pending'" @click="approveSkill(skill.id)" class="action-btn btn-success">通过</button>
+                  <button v-if="skill.status === 'pending'" @click="rejectSkill(skill.id)" class="action-btn btn-danger">拒绝</button>
+                  <button @click="editSkill(skill.id)" class="action-btn" style="background: #1890ff; color: white;">编辑</button>
+                  <button @click="deleteSkill(skill.id)" class="action-btn btn-danger">删除</button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </template>
+
+  <!-- 技能详情页面模板 -->
+  <template id="detail-template">
+    <div class="detail-container">
+      <div class="detail-card">
+        <div v-if="loading" style="text-align: center; padding: 40px;">加载中...</div>
+        <div v-else-if="!skill" class="empty-state">技能不存在</div>
+        <div v-else>
+          <!-- 技能头部 -->
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; padding-bottom: 24px; border-bottom: 1px solid #f0f0f0;">
+            <div style="flex: 1;">
+              <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+                <h1 style="font-size: 32px; color: #333; margin: 0;">{{ skill.name }}</h1>
+                <span :class="skill.is_free ? 'tag tag-green' : 'tag tag-blue'" style="font-size: 16px; padding: 6px 16px;">
+                  {{ skill.is_free ? '免费' : '¥' + skill.price }}
+                </span>
+              </div>
+              <p style="color: #666; font-size: 16px; line-height: 1.6; margin: 0;">{{ skill.description }}</p>
+            </div>
+          </div>
+          
+          <!-- 技能元信息 -->
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 32px; padding: 24px; background: #fafafa; border-radius: 12px;">
+            <div>
+              <div style="color: #999; font-size: 13px; margin-bottom: 4px;">📂 分类</div>
+              <div style="color: #333; font-weight: 500;">{{ skill.category }}</div>
+            </div>
+            <div>
+              <div style="color: #999; font-size: 13px; margin-bottom: 4px;">👤 开发者</div>
+              <div style="color: #333; font-weight: 500;">{{ skill.developer_name || skill.author || '未知' }}</div>
+            </div>
+            <div>
+              <div style="color: #999; font-size: 13px; margin-bottom: 4px;">⭐ 评分</div>
+              <div style="color: #333; font-weight: 500;">{{ skill.rating || 0 }} / 5.0</div>
+            </div>
+            <div>
+              <div style="color: #999; font-size: 13px; margin-bottom: 4px;">⬇️ 下载</div>
+              <div style="color: #333; font-weight: 500;">{{ skill.download_count || 0 }} 次</div>
+            </div>
+            <div>
+              <div style="color: #999; font-size: 13px; margin-bottom: 4px;">📦 版本</div>
+              <div style="color: #333; font-weight: 500;">{{ skill.version || '1.0.0' }}</div>
+            </div>
+            <div>
+              <div style="color: #999; font-size: 13px; margin-bottom: 4px;">📅 更新时间</div>
+              <div style="color: #333; font-weight: 500;">{{ formatDate(skill.updated_at) }}</div>
+            </div>
+          </div>
+          
+          <!-- 详细信息 -->
+          <div style="margin-bottom: 32px;">
+            <h3 style="font-size: 20px; color: #333; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 2px solid #667eea;">📖 详细信息</h3>
+            <div style="display: grid; gap: 16px;">
+              <div v-if="skill.repository" style="display: flex; align-items: center; gap: 12px; padding: 16px; background: #fafafa; border-radius: 8px;">
+                <span style="font-size: 20px;">🔗</span>
+                <div>
+                  <div style="color: #999; font-size: 13px; margin-bottom: 4px;">GitHub 仓库</div>
+                  <a :href="skill.repository" target="_blank" style="color: #667eea; text-decoration: none; font-weight: 500;">{{ skill.repository }}</a>
+                </div>
+              </div>
+              <div v-if="skill.documentation" style="display: flex; align-items: center; gap: 12px; padding: 16px; background: #fafafa; border-radius: 8px;">
+                <span style="font-size: 20px;">📄</span>
+                <div>
+                  <div style="color: #999; font-size: 13px; margin-bottom: 4px;">文档链接</div>
+                  <a :href="skill.documentation" target="_blank" style="color: #667eea; text-decoration: none; font-weight: 500;">{{ skill.documentation }}</a>
+                </div>
+              </div>
+              <div v-if="skill.tags && skill.tags.length > 0">
+                <div style="color: #999; font-size: 13px; margin-bottom: 8px;">🏷️ 标签</div>
+                <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+                  <span v-for="tag in skill.tags" :key="tag" class="tag tag-gray">{{ tag }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- 评价区域 -->
+          <div style="margin-bottom: 32px;">
+            <h3 style="font-size: 20px; color: #333; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 2px solid #667eea;">⭐ 用户评价 ({{ skill.review_count || 0 }})</h3>
+            
+            <!-- 评价表单 (已登录用户) -->
+            <div v-if="isLoggedIn" style="margin-bottom: 24px; padding: 20px; background: #fafafa; border-radius: 8px;">
+              <h4 style="margin-bottom: 12px; color: #333;">发表评价</h4>
+              <div style="margin-bottom: 12px;">
+                <label style="display: block; margin-bottom: 8px; color: #666;">评分</label>
+                <div style="display: flex; gap: 8px;">
+                  <button v-for="star in 5" :key="star" @click="reviewForm.rating = star" 
+                    :style="{fontSize: '24px', background: 'none', border: 'none', cursor: 'pointer', color: star <= reviewForm.rating ? '#fadb14' : '#d9d9d9'}">
+                    ★
+                  </button>
+                </div>
+              </div>
+              <div style="margin-bottom: 12px;">
+                <label style="display: block; margin-bottom: 8px; color: #666;">评价内容</label>
+                <textarea v-model="reviewForm.comment" rows="3" class="form-input" placeholder="分享您的使用体验..."></textarea>
+              </div>
+              <button @click="submitReview" class="btn btn-primary" :disabled="!reviewForm.rating">提交评价</button>
+            </div>
+            
+            <!-- 评价列表 -->
+            <div v-if="reviews && reviews.length > 0" style="display: grid; gap: 16px;">
+              <div v-for="review in reviews" :key="review.id" style="padding: 16px; background: #fafafa; border-radius: 8px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                  <div style="display: flex; align-items: center; gap: 8px;">
+                    <span style="color: #fadb14; font-size: 16px;">{{ '★'.repeat(review.rating) }}{{ '☆'.repeat(5 - review.rating) }}</span>
+                    <span style="color: #999; font-size: 13px;">{{ formatDate(review.created_at) }}</span>
+                  </div>
+                </div>
+                <p style="color: #666; line-height: 1.6;">{{ review.comment || '暂无评价内容' }}</p>
+              </div>
+            </div>
+            <div v-else class="empty-state" style="padding: 32px;">
+              <p>暂无评价，快来发表第一条评论吧！</p>
+            </div>
+          </div>
+          
+          <!-- 操作按钮 -->
+          <div style="display: flex; gap: 16px; margin-top: 32px; padding-top: 32px; border-top: 1px solid #f0f0f0;">
+            <button @click="buySkill" class="btn btn-primary" style="flex: 1; font-size: 16px; padding: 14px 32px;">
+              {{ skill.is_free ? '立即下载' : '立即购买' }}
+            </button>
+            <button @click="$router.push('/')" class="btn" style="flex: 1; border: 1px solid #d9d9d9; font-size: 16px; padding: 14px 32px;">返回</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </template>
+
+  <!-- 个人中心页面模板 -->
+  <template id="profile-template">
+    <div class="upload-container">
+      <div class="upload-box">
+        <div class="upload-header">
+          <h1>👤 个人中心</h1>
+          <p>管理您的账号信息</p>
+        </div>
+        <div v-if="loading" style="text-align: center; padding: 40px;">加载中...</div>
+        <div v-else-if="!profile" class="empty-state">加载失败</div>
+        <div v-else>
+          <div style="display: flex; align-items: center; gap: 24px; margin-bottom: 32px; padding: 24px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 12px; color: white;">
+            <div style="width: 80px; height: 80px; background: rgba(255,255,255,0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 36px; font-weight: bold;">
+              {{ profile.username[0].toUpperCase() }}
+            </div>
+            <div>
+              <h2 style="font-size: 24px; margin-bottom: 8px;">{{ profile.username }}</h2>
+              <p style="opacity: 0.9;">{{ profile.email }}</p>
+            </div>
+          </div>
+          <div style="display: grid; gap: 16px; margin-bottom: 32px;">
+            <div style="padding: 16px; background: #f9f9f9; border-radius: 8px;">
+              <div style="color: #999; font-size: 14px; margin-bottom: 4px;">用户 ID</div>
+              <div style="font-size: 16px; color: #333;">#{{ profile.id }}</div>
+            </div>
+            <div style="padding: 16px; background: #f9f9f9; border-radius: 8px;">
+              <div style="color: #999; font-size: 14px; margin-bottom: 4px;">开发者状态</div>
+              <div style="font-size: 16px;">
+                <span :class="profile.is_developer ? 'tag tag-green' : 'tag tag-gray'">
+                  {{ profile.is_developer ? '✅ 开发者' : '❌ 普通用户' }}
+                </span>
+              </div>
+            </div>
+            <div style="padding: 16px; background: #f9f9f9; border-radius: 8px;">
+              <div style="color: #999; font-size: 14px; margin-bottom: 4px;">管理员</div>
+              <div style="font-size: 16px;">
+                <span :class="profile.role === 'admin' ? 'tag tag-blue' : 'tag tag-gray'">
+                  {{ profile.role === 'admin' ? '✅ 是' : '❌ 否' }}
+                </span>
+              </div>
+            </div>
+            <div style="padding: 16px; background: #f9f9f9; border-radius: 8px;">
+              <div style="color: #999; font-size: 14px; margin-bottom: 4px;">注册时间</div>
+              <div style="font-size: 16px; color: #333;">{{ formatDate(profile.created_at) }}</div>
+            </div>
+          </div>
+          <div style="display: flex; gap: 16px;">
+            <button v-if="profile.is_developer" @click="$router.push('/my-skills')" class="btn btn-primary" style="flex: 1;">📦 我的技能</button>
+            <button @click="$router.push('/')" class="btn" style="flex: 1; border: 1px solid #d9d9d9;">返回首页</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </template>
+
+  <!-- 我的技能页面模板 -->
+  <template id="my-skills-template">
+    <div class="admin-panel">
+      <div class="admin-box">
+        <div class="admin-header">
+          <h1>📦 我的技能</h1>
+          <div style="display: flex; gap: 12px;">
+            <button @click="loadMySkills('all')" :class="currentFilter==='all' ? 'btn btn-primary' : 'btn'" style="border: 1px solid #667eea; color: #667eea;">全部</button>
+            <button @click="loadMySkills('pending')" :class="currentFilter==='pending' ? 'btn btn-warning' : 'btn'" style="border: 1px solid #faad14; color: #faad14;">待审核</button>
+            <button @click="loadMySkills('published')" :class="currentFilter==='published' ? 'btn btn-success' : 'btn'" style="border: 1px solid #52c41a; color: #52c41a;">已发布</button>
+            <button @click="$router.push('/upload')" class="btn btn-primary">➕ 上传技能</button>
+          </div>
+        </div>
+        <div v-if="loading" style="text-align: center; padding: 40px;">加载中...</div>
+        <div v-else-if="skills.length === 0" class="empty-state">
+          <p style="font-size: 16px; margin-bottom: 16px;">暂无技能</p>
+          <button @click="$router.push('/upload')" class="btn btn-primary">上传第一个技能</button>
+        </div>
+        <table v-else class="table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>技能名称</th>
+              <th>分类</th>
+              <th>价格</th>
+              <th>状态</th>
+              <th>下载量</th>
+              <th>评分</th>
+              <th>创建时间</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="skill in skills" :key="skill.id">
+              <td>{{ skill.id }}</td>
+              <td>
+                <div style="font-weight: 500;">{{ skill.name }}</div>
+              </td>
+              <td>{{ skill.category }}</td>
+              <td>{{ skill.is_free ? '免费' : '¥' + skill.price }}</td>
+              <td><span :class="'status-badge status-' + skill.status">{{ statusText(skill.status) }}</span></td>
+              <td>{{ skill.download_count || 0 }}</td>
+              <td>{{ skill.rating || 0 }}</td>
+              <td>{{ formatDate(skill.created_at) }}</td>
+              <td>
+                <div class="action-btns">
+                  <button @click="editMySkill(skill.id)" class="action-btn" style="background: #1890ff; color: white;">编辑</button>
+                  <button v-if="skill.status === 'published' && !skill.acc_deployed" @click="deployToACC(skill.id)" class="action-btn btn-success">部署</button>
+                  <button @click="deleteMySkill(skill.id)" class="action-btn btn-danger">删除</button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </template>
+
+  <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+  <script src="https://unpkg.com/vue-router@4/dist/vue-router.global.prod.js"></script>
+  <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+
   <script>
-    const { createApp, ref, computed, onMounted } = Vue;
-    const { createRouter, createWebHashHistory } = VueRouter;
+    (function() {
+      const { createApp, ref, computed, onMounted } = Vue;
+      const { createRouter, createWebHashHistory } = VueRouter;
+      
+      const API_BASE = window.location.hostname === 'localhost' 
+        ? 'http://localhost:8087' 
+        : 'http://' + window.location.hostname + ':8087';
+      
+      console.log('API Base:', API_BASE);
+      
+      const api = axios.create({
+        baseURL: API_BASE,
+        timeout: 10000,
+        headers: { 'Content-Type': 'application/json' }
+      });
 
-    // API 配置
-    const api = axios.create({
-      baseURL: 'http://localhost:8001',
-      timeout: 10000
-    });
+      api.interceptors.request.use(config => {
+        const token = localStorage.getItem('token');
+        if (token) config.headers.Authorization = 'Bearer ' + token;
+        return config;
+      });
 
-    api.interceptors.request.use(config => {
-      const token = localStorage.getItem('token');
-      if (token) config.headers.Authorization = `Bearer ${token}`;
-      return config;
-    });
+      // 登录页面
+      const Login = {
+        template: '#login-template',
+        setup() {
+          const form = ref({ email: '', password: '' });
+          const loading = ref(false);
+          
+          const handleLogin = async () => {
+            loading.value = true;
+            try {
+              const res = await api.post('/api/auth/login', form.value);
+              console.log('=== 登录成功 ===');
+              console.log('Token:', res.data.access_token.substring(0, 50) + '...');
+              console.log('User:', res.data.user);
+              
+              localStorage.setItem('token', res.data.access_token);
+              localStorage.setItem('user', JSON.stringify(res.data.user));
+              
+              console.log('已保存到 localStorage');
+              console.log('is_developer:', res.data.user.is_developer);
+              console.log('role:', res.data.user.role);
+              
+              alert('登录成功');
+              // 刷新页面，确保加载最新用户信息
+              setTimeout(() => {
+                window.location.reload();
+              }, 100);
+            } catch (err) {
+              console.error('登录失败:', err);
+              alert(err.response?.data?.detail || '登录失败');
+            } finally {
+              loading.value = false;
+            }
+          };
+          
+          return { form, loading, handleLogin };
+        }
+      };
 
-    // 登录页面
-    const Login = {
-      template: `
-        <div class="login-container">
-          <div class="login-box">
-            <div class="login-header">
-              <h1>🛒 Agent Skill Shop</h1>
-              <p>AI 智能体技能商店平台</p>
-            </div>
-            <a-form @finish="handleLogin" layout="vertical">
-              <a-form-item name="email" :rules="[{ required: true, message: '请输入邮箱' }]">
-                <a-input v-model:value="form.email" placeholder="邮箱" size="large" />
-              </a-form-item>
-              <a-form-item name="password" :rules="[{ required: true, message: '请输入密码' }]">
-                <a-input-password v-model:value="form.password" placeholder="密码" size="large" />
-              </a-form-item>
-              <a-form-item>
-                <a-button type="primary" html-type="submit" size="large" :loading="loading" block>
-                  {{ loading ? '登录中...' : '登录' }}
-                </a-button>
-              </a-form-item>
-              <div class="login-footer">
-                <span>还没有账号？</span>
-                <a @click="$router.push('/register')">立即注册</a>
-              </div>
-            </a-form>
-          </div>
-        </div>
-      `,
-      setup() {
-        const form = ref({ email: '', password: '' });
-        const loading = ref(false);
+      // 注册页面
+      const Register = {
+        template: '#register-template',
+        setup() {
+          const form = ref({ username: '', email: '', password: '', is_developer: false });
+          const loading = ref(false);
+          
+          const handleRegister = async () => {
+            loading.value = true;
+            try {
+              await api.post('/api/auth/register', form.value);
+              alert('注册成功，请登录');
+              window.location.hash = '/login';
+            } catch (err) {
+              alert(err.response?.data?.detail || '注册失败');
+            } finally {
+              loading.value = false;
+            }
+          };
+          
+          return { form, loading, handleRegister };
+        }
+      };
 
-        const handleLogin = async () => {
-          loading.value = true;
-          try {
-            const res = await api.post('/api/auth/login', form.value);
-            localStorage.setItem('token', res.data.access_token);
-            localStorage.setItem('user', JSON.stringify(res.data.user));
-            message.success('登录成功！');
-            router.push('/');
-          } catch (e) {
-            message.error(e.response?.data?.detail || '登录失败');
-          } finally {
-            loading.value = false;
-          }
-        };
+      // 首页
+      const Home = {
+        template: '#home-template',
+        setup() {
+          const skills = ref([]);
+          const loading = ref(false);
+          const search = ref('');
+          const filter = ref('all');
+          
+          const loadSkills = async () => {
+            loading.value = true;
+            try {
+              const params = {};
+              if (filter.value !== 'all') params.is_free = filter.value === 'free';
+              const res = await api.get('/api/skills', { params });
+              skills.value = res.data?.items || [];
+            } catch (err) {
+              console.error('加载技能失败:', err);
+              skills.value = [];
+            } finally {
+              loading.value = false;
+            }
+          };
+          
+          const goToDetail = (skillId) => { window.location.hash = '/skill/' + skillId; };
+          
+          onMounted(() => { loadSkills(); });
+          
+          return { skills, loading, search, filter, loadSkills, goToDetail };
+        }
+      };
 
-        return { form, loading, handleLogin };
-      }
-    };
+      // 上传技能页面
+      const Upload = {
+        template: '#upload-template',
+        setup() {
+          const form = ref({
+            name: '', description: '', category: '', author: '',
+            price: 0, is_free: false, repository: '', documentation: '', tagsStr: ''
+          });
+          const loading = ref(false);
+          
+          const handleFreeChange = () => {
+            if (form.value.is_free) {
+              form.value.price = 0;
+            }
+          };
+          
+          const handleSubmit = async () => {
+            loading.value = true;
+            try {
+              const tags = form.value.tagsStr ? form.value.tagsStr.split(',').map(t => t.trim()) : [];
+              const skillData = {
+                ...form.value,
+                tags: tags,
+                status: 'pending'
+              };
+              await api.post('/api/skills', skillData);
+              alert('技能已提交审核！');
+              window.location.hash = '/';
+            } catch (err) {
+              alert(err.response?.data?.detail || '提交失败');
+            } finally {
+              loading.value = false;
+            }
+          };
+          
+          return { form, loading, handleFreeChange, handleSubmit };
+        }
+      };
 
-    // 注册页面
-    const Register = {
-      template: `
-        <div class="login-container">
-          <div class="login-box">
-            <div class="login-header">
-              <h1>🛒 注册账号</h1>
-              <p>加入 Agent Skill Shop</p>
-            </div>
-            <a-form @finish="handleRegister" layout="vertical">
-              <a-form-item name="username" :rules="[{ required: true, min: 3 }]">
-                <a-input v-model:value="form.username" placeholder="用户名" size="large" />
-              </a-form-item>
-              <a-form-item name="email" :rules="[{ required: true, type: 'email' }]">
-                <a-input v-model:value="form.email" placeholder="邮箱" size="large" />
-              </a-form-item>
-              <a-form-item name="password" :rules="[{ required: true, min: 6 }]">
-                <a-input-password v-model:value="form.password" placeholder="密码" size="large" />
-              </a-form-item>
-              <a-form-item>
-                <a-checkbox v-model:checked="form.isDeveloper">我是开发者</a-checkbox>
-              </a-form-item>
-              <a-form-item>
-                <a-button type="primary" html-type="submit" size="large" :loading="loading" block>
-                  {{ loading ? '注册中...' : '立即注册' }}
-                </a-button>
-              </a-form-item>
-              <div class="login-footer">
-                <span>已有账号？</span>
-                <a @click="$router.push('/login')">立即登录</a>
-              </div>
-            </a-form>
-          </div>
-        </div>
-      `,
-      setup() {
-        const form = ref({ username: '', email: '', password: '', isDeveloper: false });
-        const loading = ref(false);
+      // 管理后台页面
+      const Admin = {
+        template: '#admin-template',
+        setup() {
+          const skills = ref([]);
+          const loading = ref(false);
+          const currentFilter = ref('pending');
+          
+          const loadSkills = async (status) => {
+            currentFilter.value = status;
+            loading.value = true;
+            try {
+              const res = await api.get('/api/skills-all');
+              let allSkills = res.data?.items || [];
+              if (status !== 'all') {
+                allSkills = allSkills.filter(s => s.status === status);
+              }
+              skills.value = allSkills;
+            } catch (err) {
+              console.error('加载失败:', err);
+              skills.value = [];
+            } finally {
+              loading.value = false;
+            }
+          };
+          
+          const statusText = (status) => {
+            const map = { draft: '草稿', pending: '待审核', published: '已发布', rejected: '已拒绝' };
+            return map[status] || status;
+          };
+          
+          const formatDate = (dateStr) => {
+            if (!dateStr) return '';
+            return new Date(dateStr).toLocaleDateString('zh-CN');
+          };
+          
+          const approveSkill = async (skillId) => {
+            if (!confirm('确认通过此技能？')) return;
+            try {
+              await api.put('/api/skills/' + skillId + '/status', { status: 'published' });
+              alert('技能已通过');
+              loadSkills('pending');
+            } catch (err) {
+              alert('操作失败');
+            }
+          };
+          
+          const rejectSkill = async (skillId) => {
+            const reason = prompt('请输入拒绝原因：');
+            if (!reason) return;
+            try {
+              await api.put('/api/skills/' + skillId + '/status', { status: 'rejected' });
+              alert('技能已拒绝');
+              loadSkills('pending');
+            } catch (err) {
+              alert('操作失败');
+            }
+          };
+          
+          const editSkill = (skillId) => { alert('编辑功能开发中'); };
+          const deleteSkill = async (skillId) => {
+            if (!confirm('确认删除此技能？')) return;
+            try {
+              await api.delete('/api/skills/' + skillId);
+              alert('技能已删除');
+              loadSkills(currentFilter.value);
+            } catch (err) {
+              alert('操作失败');
+            }
+          };
+          
+          onMounted(() => { loadSkills('pending'); });
+          
+          return { skills, loading, currentFilter, loadSkills, statusText, formatDate, approveSkill, rejectSkill, editSkill, deleteSkill };
+        }
+      };
 
-        const handleRegister = async () => {
-          loading.value = true;
-          try {
-            await api.post('/api/auth/register', form.value);
-            message.success('注册成功！请登录');
-            router.push('/login');
-          } catch (e) {
-            message.error(e.response?.data?.detail || '注册失败');
-          } finally {
-            loading.value = false;
-          }
-        };
+      // 技能详情页面
+      const Detail = {
+        template: '#detail-template',
+        setup() {
+          const skill = ref(null);
+          const loading = ref(false);
+          const reviews = ref([]);
+          const reviewForm = ref({ rating: 0, comment: '' });
+          const isLoggedIn = ref(!!localStorage.getItem('token'));
+          
+          const loadSkill = async () => {
+            loading.value = true;
+            try {
+              const skillId = window.location.hash.split('/').pop();
+              const res = await api.get('/api/skills/' + skillId);
+              skill.value = res.data;
+              // 加载评价列表 (模拟数据，待后端 API 支持)
+              reviews.value = [];
+            } catch (err) {
+              console.error('加载失败:', err);
+              skill.value = null;
+            } finally {
+              loading.value = false;
+            }
+          };
+          
+          const formatDate = (dateStr) => {
+            if (!dateStr) return '';
+            return new Date(dateStr).toLocaleDateString('zh-CN');
+          };
+          
+          const submitReview = async () => {
+            if (!reviewForm.value.rating) {
+              alert('请选择评分');
+              return;
+            }
+            try {
+              const skillId = window.location.hash.split('/').pop();
+              await api.post('/api/skills/' + skillId + '/reviews', reviewForm.value);
+              alert('评价提交成功！');
+              reviewForm.value = { rating: 0, comment: '' };
+              loadSkill(); // 刷新技能信息
+            } catch (err) {
+              alert('评价失败：' + (err.response?.data?.detail || '未知错误'));
+            }
+          };
+          
+          const buySkill = () => { alert('购买功能开发中'); };
+          
+          onMounted(() => { loadSkill(); });
+          
+          return { skill, loading, reviews, reviewForm, isLoggedIn, formatDate, submitReview, buySkill };
+        }
+      };
 
-        return { form, loading, handleRegister };
-      }
-    };
+      // 个人中心页面
+      const Profile = {
+        template: '#profile-template',
+        setup() {
+          const profile = ref(null);
+          const loading = ref(false);
+          
+          const loadProfile = async () => {
+            loading.value = true;
+            try {
+              const res = await api.get('/api/auth/me');
+              profile.value = res.data;
+            } catch (err) {
+              console.error('加载失败:', err);
+              profile.value = null;
+            } finally {
+              loading.value = false;
+            }
+          };
+          
+          const formatDate = (dateStr) => {
+            if (!dateStr) return '';
+            return new Date(dateStr).toLocaleDateString('zh-CN');
+          };
+          
+          onMounted(() => { loadProfile(); });
+          
+          return { profile, loading, formatDate };
+        }
+      };
 
-    // 首页
-    const Home = {
-      template: `
-        <div>
-          <div class="hero-section">
-            <h1>🚀 发现强大的 AI 技能</h1>
-            <p>探索、购买、部署 AI 智能体技能</p>
-            <div class="search-box">
-              <a-input-search v-model:value="search" placeholder="搜索技能..." size="large" @search="loadSkills" />
-            </div>
-            <div class="filter-tags">
-              <a-tag :color="filter==='all'?'blue':''" @click="filter='all';loadSkills()" style="cursor:pointer">全部</a-tag>
-              <a-tag :color="filter==='free'?'green':''" @click="filter='free';loadSkills()" style="cursor:pointer">🆓 免费</a-tag>
-              <a-tag :color="filter==='paid'?'orange':''" @click="filter='paid';loadSkills()" style="cursor:pointer">💰 付费</a-tag>
-            </div>
-          </div>
-          <div class="skills-list">
-            <div class="skills-header">
-              <h2>热门技能</h2>
-            </div>
-            <a-row :gutter="[24,24]">
-              <a-col v-for="skill in skills" :key="skill.id" :xs="24" :sm="12" :md="8" :lg="6">
-                <a-card hoverable class="skill-card" @click="goToDetail(skill.id)">
-                  <template #cover>
-                    <div class="skill-cover">
-                      <span class="skill-icon">🤖</span>
-                      <a-tag v-if="skill.is_free" color="green" class="free-tag">免费</a-tag>
-                      <a-tag v-else color="orange" class="price-tag">¥{{ skill.price }}</a-tag>
-                    </div>
-                  </template>
-                  <a-card-meta :title="skill.name" :description="skill.description">
-                    <template #description>
-                      <p class="skill-desc">{{ skill.description }}</p>
-                      <div class="skill-meta">
-                        <span>📥 {{ skill.download_count }}</span>
-                        <span>⭐ {{ skill.rating?.toFixed(1) || '0.0' }}</span>
-                      </div>
-                    </template>
-                  </a-card-meta>
-                </a-card>
-              </a-col>
-            </a-row>
-            <a-empty v-if="skills.length===0 && !loading" description="暂无技能" />
-            <div v-if="loading" style="text-align:center;padding:60px 0"><a-spin size="large" /></div>
-          </div>
-        </div>
-      `,
-      setup() {
-        const skills = ref([]);
-        const loading = ref(false);
-        const search = ref('');
-        const filter = ref('all');
+      // 我的技能页面
+      const MySkills = {
+        template: '#my-skills-template',
+        setup() {
+          const skills = ref([]);
+          const loading = ref(false);
+          const currentFilter = ref('all');
+          
+          const loadMySkills = async (status) => {
+            currentFilter.value = status;
+            loading.value = true;
+            try {
+              const res = await api.get('/api/skills');
+              let allSkills = res.data?.items || [];
+              if (status !== 'all') {
+                allSkills = allSkills.filter(s => s.status === status);
+              }
+              skills.value = allSkills;
+            } catch (err) {
+              console.error('加载失败:', err);
+              skills.value = [];
+            } finally {
+              loading.value = false;
+            }
+          };
+          
+          const statusText = (status) => {
+            const map = { draft: '草稿', pending: '待审核', published: '已发布', rejected: '已拒绝' };
+            return map[status] || status;
+          };
+          
+          const formatDate = (dateStr) => {
+            if (!dateStr) return '';
+            return new Date(dateStr).toLocaleDateString('zh-CN');
+          };
+          
+          const editMySkill = (skillId) => { alert('编辑功能开发中'); };
+          
+          const deleteMySkill = async (skillId) => {
+            if (!confirm('确认删除此技能？')) return;
+            try {
+              await api.delete('/api/skills/' + skillId);
+              alert('技能已删除');
+              loadMySkills(currentFilter.value);
+            } catch (err) {
+              alert('操作失败');
+            }
+          };
+          
+          const deployToACC = async (skillId) => {
+            try {
+              const res = await api.post('/api/skills/' + skillId + '/deploy');
+              alert('部署成功！Agent ID: ' + res.data.agent_id);
+              loadMySkills(currentFilter.value);
+            } catch (err) {
+              alert('部署失败：' + (err.response?.data?.detail || '未知错误'));
+            }
+          };
+          
+          onMounted(() => { loadMySkills('all'); });
+          
+          return { skills, loading, currentFilter, loadMySkills, statusText, formatDate, editMySkill, deleteMySkill, deployToACC };
+        }
+      };
 
-        const loadSkills = async () => {
-          loading.value = true;
-          try {
-            const params = { skip: 0, limit: 20 };
-            if (filter.value === 'free') params.is_free = true;
-            else if (filter.value === 'paid') params.is_free = false;
-            if (search.value) params.search = search.value;
-            const res = await api.get('/api/skills', { params });
-            skills.value = res.data.items || [];
-          } catch (e) {
-            console.error(e);
-          } finally {
-            loading.value = false;
-          }
-        };
+      const routes = [
+        { path: '/', component: Home },
+        { path: '/login', component: Login },
+        { path: '/register', component: Register },
+        { path: '/upload', component: Upload },
+        { path: '/admin', component: Admin },
+        { path: '/skill/:id', component: Detail },
+        { path: '/profile', component: Profile },
+        { path: '/my-skills', component: MySkills }
+      ];
 
-        const goToDetail = (skillId) => {
-          window.location.hash = '/skill/' + skillId;
-        };
+      const router = createRouter({ history: createWebHashHistory(), routes });
 
-        onMounted(loadSkills);
-        return { skills, loading, search, filter, loadSkills, goToDetail };
-      }
-    };
+      const app = createApp({
+        setup() {
+          const user = ref(null);
+          const isDeveloper = ref(false);
+          const isAdmin = ref(false);
+          const showMenu = ref(false);
+          
+          const showHeader = computed(() => {
+            const hash = window.location.hash;
+            return !hash.includes('login') && !hash.includes('register');
+          });
+          
+          const isLoggedIn = computed(() => !!localStorage.getItem('token'));
+          
+          const handleLogout = () => {
+            console.log('=== 退出登录开始 ===');
+            console.log('清除前 token:', localStorage.getItem('token'));
+            console.log('清除前 user:', localStorage.getItem('user'));
+            
+            // 清除所有认证信息
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            
+            console.log('清除后 token:', localStorage.getItem('token'));
+            console.log('清除后 user:', localStorage.getItem('user'));
+            
+            // 清除 Vue 状态
+            user.value = null;
+            isDeveloper.value = false;
+            isAdmin.value = false;
+            showMenu.value = false;
+            
+            console.log('Vue 状态已清除');
+            
+            // 使用 replace 强制跳转，不使用浏览器历史
+            window.location.replace(window.location.origin + '/#/login');
+          };
+          
+          const loadUser = () => {
+            const userStr = localStorage.getItem('user');
+            if (userStr) {
+              const userData = JSON.parse(userStr);
+              user.value = userData;
+              isDeveloper.value = userData.is_developer || false;
+              isAdmin.value = userData.role === 'admin' || false;
+              console.log('User loaded:', userData, 'isDeveloper:', isDeveloper.value, 'isAdmin:', isAdmin.value);
+            }
+          };
+          
+          const doLogout = () => {
+            handleLogout();
+          };
+          
+          onMounted(loadUser);
+          
+          return { user, isDeveloper, isAdmin, showMenu, showHeader, isLoggedIn, handleLogout, doLogout };
+        }
+      });
 
-    const routes = [
-      { path: '/', component: Home },
-      { path: '/login', component: Login },
-      { path: '/register', component: Register }
-    ];
-
-    const router = createRouter({
-      history: createWebHashHistory(),
-      routes
-    });
-
-    const { message } = antd;
-
-    const app = createApp({
-      setup() {
-        const user = ref(null);
-        const isDeveloper = ref(false);
-        const showHeader = computed(() => {
-          const hash = window.location.hash;
-          return !hash.includes('login') && !hash.includes('register');
-        });
-        const isLoggedIn = computed(() => !!localStorage.getItem('token'));
-
-        const handleLogout = () => {
-          localStorage.removeItem('token');
-          localStorage.removeItem('user');
-          user.value = null;
-          isDeveloper.value = false;
-          message.success('已退出登录');
-          window.location.hash = '/';
-        };
-
-        const loadUser = () => {
-          const userStr = localStorage.getItem('user');
-          if (userStr) {
-            user.value = JSON.parse(userStr);
-            isDeveloper.value = user.value.is_developer || false;
-          }
-        };
-
-        onMounted(loadUser);
-
-        return { user, isDeveloper, showHeader, isLoggedIn, handleLogout };
-      }
-    });
-
-    app.use(router);
-    app.use(antd);
-    app.mount('#app');
+      app.use(router);
+      app.mount('#app');
+      
+      console.log('App mounted successfully!');
+    })();
   </script>
 </body>
 </html>

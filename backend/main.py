@@ -205,10 +205,15 @@ async def list_skills(
     skills = query.offset(skip).limit(limit).all()
     total = query.count()
     
-    return SkillList(
-        items=[SkillResponse.model_validate(s) for s in skills],
-        total=total
-    )
+    # 填充开发者名称
+    items = []
+    for skill in skills:
+        skill_dict = SkillResponse.model_validate(skill)
+        if skill.developer:
+            skill_dict.developer_name = skill.developer.username
+        items.append(skill_dict)
+    
+    return SkillList(items=items, total=total)
 
 @app.get("/api/skills/{skill_id}", response_model=SkillResponse)
 async def get_skill(skill_id: int, db: Session = Depends(get_db)):
@@ -216,19 +221,30 @@ async def get_skill(skill_id: int, db: Session = Depends(get_db)):
     skill = db.query(models.Skill).filter(models.Skill.id == skill_id).first()
     if not skill:
         raise HTTPException(status_code=404, detail="技能不存在")
-    return skill
+    
+    # 填充开发者名称
+    skill_dict = SkillResponse.model_validate(skill)
+    if skill.developer:
+        skill_dict.developer_name = skill.developer.username
+    
+    return skill_dict
 
 @app.post("/api/skills", response_model=SkillResponse)
 async def create_skill(
     skill: SkillCreate,
+    current_user: models.User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     """创建技能（开发者）"""
-    # 从 JWT 获取用户 ID
-    # TODO: 实现 JWT 认证后从这里获取
-    developer_id = 1
+    # 检查用户是否是开发者
+    if not current_user.is_developer:
+        raise HTTPException(status_code=403, detail="只有开发者才能上传技能")
     
-    db_skill = models.Skill(**skill.dict(), developer_id=developer_id)
+    db_skill = models.Skill(
+        **skill.dict(),
+        developer_id=current_user.id,
+        status=models.SkillStatus.PENDING  # 提交后进入待审核状态
+    )
     db.add(db_skill)
     db.commit()
     db.refresh(db_skill)
@@ -256,9 +272,14 @@ async def update_skill(
 @app.delete("/api/skills/{skill_id}")
 async def delete_skill(
     skill_id: int,
+    current_user: models.User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     """删除技能"""
+    # 检查是否是管理员
+    if not current_user or current_user.role != "admin":
+        raise HTTPException(status_code=403, detail="只有管理员才能删除技能")
+    
     db_skill = db.query(models.Skill).filter(models.Skill.id == skill_id).first()
     if not db_skill:
         raise HTTPException(status_code=404, detail="技能不存在")
@@ -266,6 +287,53 @@ async def delete_skill(
     db.delete(db_skill)
     db.commit()
     return {"message": "技能已删除"}
+
+
+# ============ 管理员 API ============
+
+@app.get("/api/skills-all", response_model=SkillList)
+async def list_all_skills(
+    current_user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """获取所有技能（管理员专用，包含待审核技能）"""
+    # 检查是否是管理员
+    if not current_user or current_user.role != "admin":
+        raise HTTPException(status_code=403, detail="只有管理员才能访问")
+    
+    skills = db.query(models.Skill).order_by(models.Skill.created_at.desc()).all()
+    return SkillList(
+        items=[SkillResponse.model_validate(s) for s in skills],
+        total=len(skills)
+    )
+
+
+@app.put("/api/skills/{skill_id}/status")
+async def update_skill_status(
+    skill_id: int,
+    status_data: dict,
+    current_user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """更新技能状态（管理员审核）"""
+    # 检查是否是管理员
+    if not current_user or current_user.role != "admin":
+        raise HTTPException(status_code=403, detail="只有管理员才能审核技能")
+    
+    db_skill = db.query(models.Skill).filter(models.Skill.id == skill_id).first()
+    if not db_skill:
+        raise HTTPException(status_code=404, detail="技能不存在")
+    
+    # 更新状态
+    new_status = status_data.get("status")
+    if new_status not in ["draft", "pending", "published", "rejected"]:
+        raise HTTPException(status_code=400, detail="无效的状态")
+    
+    db_skill.status = new_status
+    db.commit()
+    db.refresh(db_skill)
+    
+    return {"message": "状态已更新", "status": new_status}
 
 # ============ 订单 API ============
 
@@ -351,7 +419,7 @@ async def create_review(
 async def deploy_skill_to_acc(
     skill_id: int,
     db: Session = Depends(get_db),
-    current_user: dict = Depends(get_current_user)
+    current_user: models.User = Depends(get_current_user)
 ):
     """部署技能到 ACC 平台"""
     # 获取技能
@@ -428,7 +496,7 @@ async def get_acc_deployment_status(
 async def undeploy_skill_from_acc(
     skill_id: int,
     db: Session = Depends(get_db),
-    current_user: dict = Depends(get_current_user)
+    current_user: models.User = Depends(get_current_user)
 ):
     """从 ACC 移除技能"""
     skill = db.query(models.Skill).filter(models.Skill.id == skill_id).first()
